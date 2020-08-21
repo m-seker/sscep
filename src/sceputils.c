@@ -227,7 +227,7 @@ key_fingerprint(X509_REQ *req) {
 	int		c, len;
 	BIO		*bio;
 	MD5_CTX		ctx;
-	
+
 	/* Assign space for ASCII presentation of the digest */
 	str = (char *)malloc(2 * MD5_DIGEST_LENGTH + 1);
 	ret = str;

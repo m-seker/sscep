@@ -2,7 +2,6 @@
 #include <string.h>
 #include <openssl/conf.h>
 
-
 #define SCEP_CONFIGURATION_ENGINE_CAPI_STORELOCATION	"storelocation"
 #define SCEP_CONFIGURATION_ENGINE_CAPI_NEWKEYLOCATION	"new_key_location"
 

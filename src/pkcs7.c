@@ -646,7 +646,7 @@ int pkcs7_unwrap(struct scep *s) {
 		printf("\n");
 	}
 	/*
-	 * Compare recipient nonce to original sender nonce 
+	 * Compare recipient nonce to original sender nonce
 	 * The draft says nothing about this, but it makes sense to me..
 	 * XXXXXXXXXXXXXX check
 	 */
@@ -713,7 +713,7 @@ int pkcs7_unwrap(struct scep *s) {
 				printf("%s: reason: %s\n", pname,
 					SCEP_FAILINFO_BADTIME_STR);
 				break;
-			case SCEP_FAILINFO_BADCERTID:		
+			case SCEP_FAILINFO_BADCERTID:
 				s->fail_info = SCEP_FAILINFO_BADCERTID;
 				printf("%s: reason: %s\n", pname,
 					SCEP_FAILINFO_BADCERTID_STR);
@@ -832,7 +832,7 @@ int add_attribute_octet(STACK_OF(X509_ATTRIBUTE) *attrs, int nid, unsigned char 
 
 /* Find signed attributes */
 int get_signed_attribute(STACK_OF(X509_ATTRIBUTE) *attribs, int nid,int type, char **buffer){
-	int		rc; 
+	int		rc;
 	ASN1_TYPE	*asn1_type;
 	unsigned int	len;
 
@@ -840,11 +840,11 @@ int get_signed_attribute(STACK_OF(X509_ATTRIBUTE) *attribs, int nid,int type, ch
 	rc = get_attribute(attribs, nid, &asn1_type);
 	if (rc == 1) {
 		if (v_flag)
-			fprintf(stderr, "%s: error finding attribute\n",pname);	
+			fprintf(stderr, "%s: error finding attribute\n",pname);
 		return (1);
 	}
 	if (ASN1_TYPE_get(asn1_type) != type) {
-		fprintf(stderr, "%s: wrong ASN.1 type\n",pname);	
+		fprintf(stderr, "%s: wrong ASN.1 type\n",pname);
 		exit (SCEP_PKISTATUS_P7);
 	}
 
@@ -861,10 +861,15 @@ int get_signed_attribute(STACK_OF(X509_ATTRIBUTE) *attribs, int nid,int type, ch
 	}
 	if (*buffer == NULL) {
 		fprintf(stderr, "%s: cannot malloc space for attribute\n",
-			pname);	
+			pname);
 		exit (SCEP_PKISTATUS_P7);
 	}
+
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
+	memcpy(*buffer, ASN1_STRING_data(asn1_type->value.asn1_string), len);
+#else
 	memcpy(*buffer, ASN1_STRING_get0_data(asn1_type->value.asn1_string), len);
+#endif
 
 	/* Add null terminator if it's a PrintableString */
 	if (type == V_ASN1_PRINTABLESTRING) {
@@ -873,7 +878,7 @@ int get_signed_attribute(STACK_OF(X509_ATTRIBUTE) *attribs, int nid,int type, ch
 	}
 
 	return (0);
-} 
+}
 
 int get_attribute(STACK_OF(X509_ATTRIBUTE) *attribs, int required_nid,
 				ASN1_TYPE **asn1_type) {

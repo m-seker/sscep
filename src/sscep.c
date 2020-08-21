@@ -10,6 +10,51 @@
 
 #include "sscep.h"
 
+/* SCEP operations */
+int operation_flag;
+
+/* Global variables */
+
+/* Program name */
+char *pname;
+
+/* Network timeout */
+int timeout;
+
+/* Certificates, requests, keys.. */
+X509 *cacert;
+X509 *encert;
+X509 *localcert;
+X509 *othercert;
+X509 *renewal_cert;
+X509_REQ *request;
+EVP_PKEY *rsa;
+EVP_PKEY *renewal_key;
+X509_CRL *crl;
+FILE *cafile;
+FILE *reqfile;
+FILE *otherfile;
+FILE *crlfile;
+
+/* Fingerprint, signing and encryption algorithms */
+EVP_MD *fp_alg;
+EVP_MD *sig_alg;
+EVP_CIPHER *enc_alg;
+
+/* OpenSSL OID handles */
+int nid_messageType;
+int nid_pkiStatus;
+int nid_failInfo;
+int nid_senderNonce;
+int nid_recipientNonce;
+int nid_transId;
+int nid_extensionReq;
+/**/
+
+/* Global pkistatus */
+int pkistatus;
+/* End of Global variables */
+
 static char *
 handle_serial (char * serial)
 {
@@ -78,7 +123,7 @@ main(int argc, char **argv) {
 	X509 				*cert=NULL;
 	int i;
 	int required_option_space;
-	
+
 
 
 #ifdef WIN32
@@ -87,9 +132,9 @@ main(int argc, char **argv) {
 	int err;
 	//printf("Starting sscep\n");
 	//fprintf(stdout, "%s: starting sscep on WIN32, sscep version %s\n",	pname, VERSION);
-       
+
 	wVersionRequested = MAKEWORD( 2, 2 );
- 
+
 	err = WSAStartup( wVersionRequested, &wsaData );
 	if ( err != 0 )
 	{
@@ -97,20 +142,20 @@ main(int argc, char **argv) {
 	  /* WinSock DLL.                                  */
 	  return;
 	}
- 
+
 	/* Confirm that the WinSock DLL supports 2.2.*/
 	/* Note that if the DLL supports versions greater    */
 	/* than 2.2 in addition to 2.2, it will still return */
 	/* 2.2 in wVersion since that is the version we      */
 	/* requested.                                        */
- 
+
 	if ( LOBYTE( wsaData.wVersion ) != 2 ||
 	        HIBYTE( wsaData.wVersion ) != 2 )
 	{
 	    /* Tell the user that we could not find a usable */
 	    /* WinSock DLL.                                  */
 	    WSACleanup( );
-	    return; 
+	    return;
 	}
 
 #endif
@@ -287,7 +332,7 @@ main(int argc, char **argv) {
 	/* If we debug, include verbose messages also */
 	if (d_flag)
 		v_flag = 1;
-	
+
 	if(f_char){
 		scep_conf_init(f_char);
 	}else{
@@ -322,7 +367,7 @@ main(int argc, char **argv) {
 	if (g_flag) {
 		scep_t.e = scep_engine_init(scep_t.e);
 	}
-	
+
 	/*
 	 * Check argument logic.
 	 */
@@ -769,7 +814,7 @@ main(int argc, char **argv) {
 			  fprintf(stderr, "%s: missing private key (-k)\n", pname);
 			  exit (SCEP_PKISTATUS_FILE);
 			}
-			
+
 			if(scep_conf != NULL) {
 				sscep_engine_read_key_new(&rsa, k_char, scep_t.e);
 			} else {
@@ -803,10 +848,10 @@ main(int argc, char **argv) {
 				}
 			}
 
-			
+
 			if (operation_flag != SCEP_OPERATION_ENROLL)
 				goto not_enroll;
-			
+
 			if (! O_flag) {
 				if (v_flag)
 					fprintf(stdout, "%s: generating selfsigned "
